@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrice Metodi & Relazioni Scout</title>
+    <style>
+        :root {
+            --lupi-color: #1b6ca8;   /* Blu */
+            --esplo-color: #8c6239;  /* Kaki / Marrone */
+            --sez-color: #27ae60;    /* Verde */
+            --primary-color: #1b365d;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; margin: 0; padding: 20px; color: #2c3e50; }
+        .container { max-width: 1500px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        
+        .header-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+        .title-area { display: flex; align-items: center; gap: 15px; }
+        h1 { color: var(--primary-color); margin: 0; font-size: 24px; }
+        .top-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; min-width: 1000px; }
+        th, td { border: 1px solid #dcdde1; padding: 12px; text-align: center; vertical-align: middle; }
+        
+        th { background-color: var(--primary-color); color: white; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        th.relation-header { width: 160px; font-weight: 600; }
+        td.method-row-header { text-align: center; background-color: #f8f9fa; width: 180px; font-weight: bold; color: var(--primary-color); font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        th.corner-cell { background-color: var(--primary-color); }
+
+        .cell-view { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; min-height: 50px; }
+        .lbl-lupi { color: var(--lupi-color); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .lbl-esplo { color: var(--esplo-color); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .lbl-sez { color: var(--sez-color); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .crosses-text { font-weight: bold; font-size: 14px; letter-spacing: 2px; }
+
+        .btn-main { padding: 10px 16px; background-color: #2980b9; color: white; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-main:hover { opacity: 0.9; }
+        .btn-config { background-color: #8e44ad; }
+        .btn-print { background-color: #27ae60; }
+
+        /* Finestre Modali */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: white; max-width: 1200px; margin: 30px auto; padding: 30px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); position: relative; }
+        .close-modal { position: absolute; right: 20px; top: 20px; font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa; }
+        .close-modal:hover { color: #000; }
+
+        .config-section { margin-bottom: 20px; }
+        .config-section label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 5px; }
+        .config-section textarea { width: 100%; height: 90px; padding: 8px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }
+
+        .edit-table-container { overflow-x: auto; margin-top: 20px; max-height: 450px; border: 1px solid #ddd; }
+        .edit-table th, .edit-table td { padding: 8px; font-size: 12px; }
+        .edit-cell-box { display: flex; flex-direction: column; gap: 4px; }
+        .edit-group-row { display: flex; justify-content: space-between; align-items: center; background: #fdfefe; padding: 3px 6px; border-radius: 4px; border: 1px solid #e1e8ed; }
+        .group-label { font-weight: bold; font-size: 11px; text-transform: uppercase; }
+        .cross-display { font-weight: bold; letter-spacing: 1px; min-width: 25px; text-align: left; }
+        
+        button.btn-sm { padding: 2px 6px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .btn-add { background-color: #27ae60; color: white; }
+        .btn-remove { background-color: #e74c3c; color: white; }
+
+        .actions { display: flex; justify-content: space-between; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
+
+        /* Stili specifici per la stampa */
+        @media print {
+            body { background-color: white; padding: 0; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; }
+            .top-buttons, .modal { display: none !important; }
+            .header-container { border-bottom: 1px solid #000; margin-bottom: 15px; padding-bottom: 10px; }
+            table { min-width: auto; width: 100%; font-size: 11px; }
+            th, td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-container">
+        <div class="title-area">
+            <h1>Matrice Metodi & Relazioni Scout</h1>
+        </div>
+        <div class="top-buttons">
+            <button class="btn-main btn-print" onclick="window.print()">🖨️ Stampa Tabella</button>
+            <button class="btn-main" onclick="openMatrixModal()">✏️ Modifica Crocette</button>
+            <button class="btn-main btn-config" onclick="requestConfigAccess()">🎨 Assi e Colori</button>
+        </div>
+    </div>
+
+    <!-- TABELLA PRINCIPALE -->
+    <div class="table-responsive">
+        <table id="matrixTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODALE 1: MODIFICA MATRICE (CROCETTE) -->
+<div id="matrixModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeMatrixModal()">&times;</span>
+        <h2 style="color: var(--primary-color); margin-top: 0;">Modifica Crocette della Matrice</h2>
+        <p style="font-size: 13px; color: #666;">Usa i pulsanti <strong>+</strong> e <strong>-</strong> per aggiungere o rimuovere crocette per ciascun gruppo nelle intersezioni.</p>
+        
+        <div class="edit-table-container">
+            <table class="edit-table" id="editMatrixTable">
+                <thead id="editTableHead"></thead>
+                <tbody id="editTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="actions">
+            <button class="btn-main" onclick="requestResetAccess()" style="background-color: #e74c3c;">🔄 Resetta Matrice</button>
+            <button class="btn-main" onclick="closeMatrixModal()" style="background-color: #27ae60;">💾 Chiudi e Salva</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODALE 2: CONFIGURAZIONE ASSI E COLORI (PROTETTA DA PASSWORD) -->
+<div id="configModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeConfigModal()">&times;</span>
+        <h2 style="color: var(--primary-color); margin-top: 0;">Configurazione Assi e Colori</h2>
+        
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
+            <div class="config-section" style="flex: 1; min-width: 300px;">
+                <label>5 Colonne (Relazioni - JSON):</label>
+                <textarea id="jsonRelations"></textarea>
+            </div>
+            <div class="config-section" style="flex: 1; min-width: 300px;">
+                <label>8 Righe (Metodi - JSON):</label>
+                <textarea id="jsonMethods"></textarea>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+            <button class="btn-main" onclick="applyTextChanges()" style="background-color: #27ae60; padding: 6px 15px; font-size: 12px;">Aggiorna Assi</button>
+            <label style="font-size: 12px;">Colore Lupi: <input type="color" id="pickerLupi" value="#1b6ca8" onchange="updateColors()"></label>
+            <label style="font-size: 12px;">Colore Esplo: <input type="color" id="pickerEsplo" value="#8c6239" onchange="updateColors()"></label>
+            <label style="font-size: 12px;">Colore Sezione: <input type="color" id="pickerSez" value="#27ae60" onchange="updateColors()"></label>
+        </div>
+
+        <div class="actions">
+            <button class="btn-main" onclick="closeConfigModal()" style="background-color: #27ae60;">💾 Salva e Chiudi</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let defaultRelations = [
+        "Relazione con il proprio ambiente",
+        "Relazione con la propria personalità",
+        "Relazione spirituale",
+        "Relazione con il proprio corpo",
+        "Relazione con gli altri"
+    ];
+
+    let defaultMethods = [
+        "Impegno per la collettività",
+        "Legge e promessa",
+        "Vita all’aria aperta",
+        "Vita in piccoli gruppi",
+        "Imparare facendo",
+        "Progressione personale",
+        "Gioco e movimento",
+        "Riti e simbologia"
+    ];
+
+    let relations = JSON.parse(localStorage.getItem('customRelationsNew')) || defaultRelations;
+    let methods = JSON.parse(localStorage.getItem('customMethodsNew')) || defaultMethods;
+
+    const groups = [
+        { id: 'lupi', label: 'Lupi', class: 'lbl-lupi' },
+        { id: 'esplo', label: 'Esplo', class: 'lbl-esplo' },
+        { id: 'sez', label: 'Sezione', class: 'lbl-sez' }
+    ];
+
+    function requestConfigAccess() {
+        let pwd = prompt("Inserisci la password per modificare gli assi e i colori:");
+        if (pwd === "Moesano") {
+            document.getElementById('jsonRelations').value = JSON.stringify(relations, null, 2);
+            document.getElementById('jsonMethods').value = JSON.stringify(methods, null, 2);
+            document.getElementById('configModal').style.display = 'block';
+        } else if (pwd !== null) {
+            alert("Password errata!");
+        }
+    }
+
+    function closeConfigModal() {
+        applyTextChanges();
+        document.getElementById('configModal').style.display = 'none';
+        renderMainTable();
+    }
+
+    function openMatrixModal() {
+        buildEditTable();
+        document.getElementById('matrixModal').style.display = 'block';
+    }
+
+    function closeMatrixModal() {
+        document.getElementById('matrixModal').style.display = 'none';
+        renderMainTable();
+    }
+
+    function applyTextChanges() {
+        try {
+            relations = JSON.parse(document.getElementById('jsonRelations').value);
+            methods = JSON.parse(document.getElementById('jsonMethods').value);
+            localStorage.setItem('customRelationsNew', JSON.stringify(relations));
+            localStorage.setItem('customMethodsNew', JSON.stringify(methods));
+        } catch (e) {
+            alert("Errore nel formato JSON inserito. Controlla le virgolette e le parentesi.");
+        }
+    }
+
+    function updateColors() {
+        let lupiCol = document.getElementById('pickerLupi').value;
+        let esploCol = document.getElementById('pickerEsplo').value;
+        let sezCol = document.getElementById('pickerSez').value;
+
+        document.documentElement.style.setProperty('--lupi-color', lupiCol);
+        document.documentElement.style.setProperty('--esplo-color', esploCol);
+        document.documentElement.style.setProperty('--sez-color', sezCol);
+
+        localStorage.setItem('colorLupiNew', lupiCol);
+        localStorage.setItem('colorEsploNew', esploCol);
+        localStorage.setItem('colorSezNew', sezCol);
+    }
+
+    if(localStorage.getItem('colorLupiNew')) {
+        document.documentElement.style.setProperty('--lupi-color', localStorage.getItem('colorLupiNew'));
+        document.getElementById('pickerLupi').value = localStorage.getItem('colorLupiNew');
+    }
+    if(localStorage.getItem('colorEsploNew')) {
+        document.documentElement.style.setProperty('--esplo-color', localStorage.getItem('colorEsploNew'));
+        document.getElementById('pickerEsplo').value = localStorage.getItem('colorEsploNew');
+    }
+    if(localStorage.getItem('colorSezNew')) {
+        document.documentElement.style.setProperty('--sez-color', localStorage.getItem('colorSezNew'));
+        document.getElementById('pickerSez').value = localStorage.getItem('colorSezNew');
+    }
+
+    function renderMainTable() {
+        let savedData = JSON.parse(localStorage.getItem('scoutMatrixDataNew')) || {};
+
+        let headTr = document.createElement('tr');
+        let thCorner = document.createElement('th');
+        thCorner.className = 'corner-cell';
+        thCorner.innerText = "";
+        headTr.appendChild(thCorner);
+
+        relations.forEach(rel => {
+            let th = document.createElement('th');
+            th.className = 'relation-header';
+            th.innerText = rel;
+            headTr.appendChild(th);
+        });
+        document.getElementById('tableHead').innerHTML = '';
+        document.getElementById('tableHead').appendChild(headTr);
+
+        let tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        methods.forEach((m, mIndex) => {
+            let tr = document.createElement('tr');
+            
+            let tdMethod = document.createElement('td');
+            tdMethod.className = 'method-row-header';
+            tdMethod.innerText = m;
+            tr.appendChild(tdMethod);
+
+            relations.forEach((rel, rIndex) => {
+                let td = document.createElement('td');
+                let cellView = document.createElement('div');
+                cellView.className = 'cell-view';
+
+                groups.forEach(g => {
+                    let key = `${mIndex}_${rIndex}_${g.id}`;
+                    let val = savedData[key] || "";
+                    
+                    if (val) {
+                        let span = document.createElement('span');
+                        span.className = 'crosses-text ' + g.class;
+                        span.innerText = val;
+                        cellView.appendChild(span);
+                    }
+                });
+
+                td.appendChild(cellView);
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function buildEditTable() {
+        let savedData = JSON.parse(localStorage.getItem('scoutMatrixDataNew')) || {};
+
+        let headTr = document.createElement('tr');
+        let thCorner = document.createElement('th');
+        thCorner.innerText = "";
+        headTr.appendChild(thCorner);
+
+        relations.forEach(rel => {
+            let th = document.createElement('th');
+            th.innerText = rel;
+            headTr.appendChild(th);
+        });
+        document.getElementById('editTableHead').innerHTML = '';
+        document.getElementById('editTableHead').appendChild(headTr);
+
+        let tbody = document.getElementById('editTableBody');
+        tbody.innerHTML = '';
+
+        methods.forEach((m, mIndex) => {
+            let tr = document.createElement('tr');
+            
+            let tdMethod = document.createElement('td');
+            tdMethod.className = 'method-row-header';
+            tdMethod.innerText = m;
+            tr.appendChild(tdMethod);
+
+            relations.forEach((rel, rIndex) => {
+                let td = document.createElement('td');
+                let cellBox = document.createElement('div');
+                cellBox.className = 'edit-cell-box';
+
+                groups.forEach(g => {
+                    let key = `${mIndex}_${rIndex}_${g.id}`;
+                    let val = savedData[key] || "";
+
+                    let groupRow = document.createElement('div');
+                    groupRow.className = 'edit-group-row';
+                    groupRow.innerHTML = `
+                        <span class="group-label ${g.class}">${g.label}:</span>
+                        <span class="cross-display ${g.class}" id="edit_val_${key}">${val}</span>
+                        <div>
+                            <button class="btn-sm btn-add" onclick="modifyCell(${mIndex}, ${rIndex}, '${g.id}', 'add')">+</button>
+                            <button class="btn-sm btn-remove" onclick="modifyCell(${mIndex}, ${rIndex}, '${g.id}', 'remove')">-</button>
+                        </div>
+                    `;
+                    cellBox.appendChild(groupRow);
+                });
+
+                td.appendChild(cellBox);
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function modifyCell(mIndex, rIndex, groupId, action) {
+        let key = `${mIndex}_${rIndex}_${groupId}`;
+        let displaySpan = document.getElementById(`edit_val_${key}`);
+        let currentText = displaySpan ? displaySpan.innerText.trim() : "";
+        let crosses = currentText ? currentText.split(" ") : [];
+
+        if (action === 'add') {
+            crosses.push("X");
+        } else if (action === 'remove' && crosses.length > 0) {
+            crosses.pop();
+        }
+
+        let newText = crosses.join(" ");
+        if (displaySpan) displaySpan.innerText = newText;
+        
+        let savedData = JSON.parse(localStorage.getItem('scoutMatrixDataNew')) || {};
+        if (newText) {
+            savedData[key] = newText;
+        } else {
+            delete savedData[key];
+        }
+        localStorage.setItem('scoutMatrixDataNew', JSON.stringify(savedData));
+    }
+
+    function requestResetAccess() {
+        let pwd = prompt("Inserisci la password per azzerare la matrice:");
+        if (pwd === "Moesano") {
+            if (confirm("Sei assolutamente sicuro di voler cancellare tutte le crocette?")) {
+                localStorage.removeItem('scoutMatrixDataNew');
+                buildEditTable();
+            }
+        } else if (pwd !== null) {
+            alert("Password errata!");
+        }
+    }
+
+    window.onload = renderMainTable;
+</script>
+
+</body>
+</html>
